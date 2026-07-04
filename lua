@@ -26,7 +26,6 @@ local mainStroke = Instance.new("UIStroke", main)
 mainStroke.Color = Color3.fromRGB(88, 101, 242)
 mainStroke.Thickness = 2
 
--- drag
 local dragging, dragStart, startPos
 main.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -45,7 +44,6 @@ main.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
 end)
 
--- title bar
 local titleBar = Instance.new("Frame")
 titleBar.Size = UDim2.new(1, 0, 0, 40)
 titleBar.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
@@ -83,14 +81,12 @@ closeBtn.BorderSizePixel = 0
 closeBtn.Parent = titleBar
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
 
--- content
 local content = Instance.new("Frame")
 content.Size = UDim2.new(1, -20, 1, -50)
 content.Position = UDim2.new(0, 10, 0, 45)
 content.BackgroundTransparency = 1
 content.Parent = main
 
--- status
 local statusDot = Instance.new("Frame")
 statusDot.Size = UDim2.new(0, 10, 0, 10)
 statusDot.Position = UDim2.new(0, 0, 0, 5)
@@ -110,7 +106,6 @@ statusLabel.Font = Enum.Font.GothamMedium
 statusLabel.TextXAlignment = Enum.TextXAlignment.Left
 statusLabel.Parent = content
 
--- turn label
 local turnLabel = Instance.new("TextLabel")
 turnLabel.Size = UDim2.new(1, 0, 0, 18)
 turnLabel.Position = UDim2.new(0, 0, 0, 22)
@@ -122,7 +117,6 @@ turnLabel.Font = Enum.Font.GothamMedium
 turnLabel.TextXAlignment = Enum.TextXAlignment.Left
 turnLabel.Parent = content
 
--- word box
 local wordBox = Instance.new("Frame")
 wordBox.Size = UDim2.new(1, 0, 0, 50)
 wordBox.Position = UDim2.new(0, 0, 0, 46)
@@ -153,7 +147,6 @@ wordLabel.Font = Enum.Font.GothamBold
 wordLabel.TextXAlignment = Enum.TextXAlignment.Left
 wordLabel.Parent = wordBox
 
--- stats
 local statsBox = Instance.new("Frame")
 statsBox.Size = UDim2.new(1, 0, 0, 60)
 statsBox.Position = UDim2.new(0, 0, 0, 106)
@@ -189,7 +182,6 @@ local wordsVal = makeStat("WORDS", 0)
 local retriesVal = makeStat("RETRIES", 0.33)
 local roundsVal = makeStat("ROUNDS", 0.66)
 
--- toggle
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(1, 0, 0, 38)
 toggleBtn.Position = UDim2.new(0, 0, 0, 176)
@@ -202,7 +194,6 @@ toggleBtn.BorderSizePixel = 0
 toggleBtn.Parent = content
 Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 8)
 
--- speed
 local speedLabel = Instance.new("TextLabel")
 speedLabel.Size = UDim2.new(1, 0, 0, 16)
 speedLabel.Position = UDim2.new(0, 0, 0, 222)
@@ -242,18 +233,216 @@ local totalRounds = 0
 statusLabel.Text = "LOADING DICT..."
 statusDot.BackgroundColor3 = Color3.fromRGB(240, 180, 40)
 
-local dictUrl = "https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt"
-local rawDict = game:HttpGet(dictUrl)
-local allWords = {}
+-- dizionario di parole comuni inglesi
+local commonWords = {
+    "about","above","abuse","acid","across","act","action","active","add","admit",
+    "adult","advice","after","again","against","age","agency","agent","agree","ahead",
+    "air","alarm","album","alert","alien","alive","allow","alone","along","already",
+    "also","alter","always","amount","anchor","anger","angle","angry","animal","annual",
+    "answer","any","apart","apple","apply","area","argue","arise","army","around",
+    "arrive","arrow","artist","aside","assume","atom","attack","attempt","aunt","author",
+    "avoid","awake","award","aware","awful","baby","back","bacon","badge","badly",
+    "bag","bake","balance","ball","ban","band","bang","bank","bar","bare",
+    "barn","base","basic","basket","bath","battle","beach","bean","bear","beard",
+    "beat","beauty","become","bed","beef","been","beer","before","begin","behind",
+    "being","believe","bell","belong","below","belt","bench","bend","best","better",
+    "beyond","bible","bicycle","big","bike","bill","bind","bird","birth","bite",
+    "bitter","black","blade","blame","blank","blast","blaze","bleed","blend","bless",
+    "blind","block","blood","blow","blue","board","boat","body","bolt","bomb",
+    "bond","bone","book","boot","border","born","boss","both","bother","bottle",
+    "bottom","bound","bowl","brain","branch","brand","brave","bread","break","breath",
+    "breed","brick","bridge","brief","bright","bring","broad","broken","brother","brown",
+    "brush","buck","budget","bug","build","bullet","bunch","burden","burn","burst",
+    "bury","bush","busy","butter","button","buyer","cabin","cable","cake","call",
+    "calm","came","camera","camp","campaign","cancel","cancer","candle","candy","capital",
+    "captain","capture","carbon","card","care","career","carpet","carry","case","cash",
+    "cast","castle","catch","category","cattle","cause","ceiling","cell","center","central",
+    "certain","chain","chair","challenge","chamber","champion","chance","change","channel","chapter",
+    "charge","chart","chase","cheap","check","cheese","cherry","chest","chicken","chief",
+    "child","chip","choice","choose","church","circle","citizen","city","civil","claim",
+    "class","classic","clean","clear","client","climb","clinical","clock","clone","close",
+    "closet","cloth","cloud","club","clue","cluster","coach","coal","coast","coat",
+    "code","coffee","cold","collar","collect","college","colony","color","column","combine",
+    "come","comfort","command","comment","commit","common","community","company","compare","compete",
+    "complain","complete","complex","computer","concern","condition","conduct","confirm","conflict","congress",
+    "connect","consider","consist","constant","construct","consume","contact","contain","content","contest",
+    "context","continue","contract","control","convert","convince","cook","cookie","cool","cope",
+    "copy","core","corn","corner","correct","cost","cotton","couch","could","council",
+    "count","counter","country","county","couple","courage","course","court","cousin","cover",
+    "crack","craft","crash","crazy","cream","create","creature","credit","crew","crime",
+    "criminal","crisis","criteria","critic","crop","cross","crowd","crucial","crush","crystal",
+    "culture","cup","cure","curious","current","curve","custom","customer","cute","cycle",
+    "dad","daily","damage","dance","danger","dare","dark","data","date","daughter",
+    "dawn","dead","deal","dear","death","debate","debt","decade","decent","decide",
+    "decision","deck","declare","decline","deep","deer","defeat","defend","define","degree",
+    "delay","deliver","demand","democracy","deny","depart","depend","deposit","depth","deputy",
+    "derive","describe","desert","design","desire","desk","detail","detect","develop","device",
+    "devote","diamond","differ","diet","dig","digital","dinner","direct","dirt","dirty",
+    "disable","discover","dish","dismiss","display","distance","distant","distinct","divide","doctor",
+    "document","dollar","domain","domestic","door","double","doubt","down","draft","drag",
+    "drain","drama","draw","dream","dress","drift","drink","drive","drop","drug",
+    "dry","duck","dumb","dump","dust","duty","each","eager","ear","early",
+    "earn","earth","ease","east","eastern","easy","eat","edge","edition","editor",
+    "educate","effect","effort","eight","either","elder","elect","electric","element","elite",
+    "else","embrace","emerge","emotion","emphasis","empire","employ","empty","enable","encounter",
+    "encourage","enemy","energy","enforce","engage","engine","enjoy","enormous","enough","ensure",
+    "enter","entire","entry","envelope","equal","equip","error","escape","essay","essential",
+    "estate","estimate","ethnic","evaluate","even","evening","event","ever","every","evidence",
+    "evil","exact","exam","example","exceed","excellent","except","exchange","excite","excuse",
+    "execute","exercise","exhibit","exist","expand","expect","expense","expert","explain","explode",
+    "explore","export","expose","extend","extent","extra","extreme","eye","fabric","face",
+    "fact","factor","factory","fail","fair","faith","fall","false","familiar","family",
+    "famous","fan","fancy","fantasy","farm","farmer","fashion","fast","fat","fate",
+    "father","fault","favor","fear","feature","federal","feed","feel","female","fence",
+    "fever","few","fiber","fiction","field","fifth","fifty","fight","figure","file",
+    "fill","film","final","finance","find","fine","finger","finish","fire","firm",
+    "first","fish","fit","five","fix","flag","flame","flash","flat","flavor",
+    "flee","flesh","flight","flip","float","flood","floor","flow","flower","fluid",
+    "fly","focus","fold","folk","follow","food","fool","foot","force","foreign",
+    "forest","forever","forget","forgive","fork","form","formal","former","formula","forth",
+    "fortune","forward","found","foundation","founder","four","frame","free","freedom","french",
+    "frequent","fresh","friend","front","frozen","fruit","fuel","full","fun","function",
+    "fund","funny","future","gain","galaxy","game","gang","gap","garage","garden",
+    "garlic","gas","gate","gather","gave","gear","gender","general","generate","genetic",
+    "gentle","genuine","gesture","ghost","giant","gift","girl","give","glad","glance",
+    "glass","global","glory","glove","goal","golden","golf","gone","good","govern",
+    "grab","grace","grade","grain","grand","grant","grass","grave","gray","great",
+    "green","greet","ground","group","grow","growth","guard","guess","guest","guide",
+    "guilt","guitar","gun","habit","hair","half","hall","hand","handle","hang",
+    "happen","happy","harbor","hard","harm","hat","hate","have","head","health",
+    "hear","heart","heat","heavy","height","help","hence","hero","hide","high",
+    "highlight","hill","hint","hire","history","hold","hole","holiday","holy","home",
+    "honest","honor","hope","horizon","horror","horse","host","hostile","hotel","hour",
+    "house","household","housing","huge","human","humor","hundred","hunger","hunt","hurry",
+    "hurt","husband","ice","idea","ideal","identify","ignore","ill","illegal","image",
+    "imagine","impact","implement","imply","import","impose","improve","incident","include","income",
+    "increase","indeed","index","indicate","individual","indoor","industry","infant","inform","initial",
+    "injury","inner","innocent","input","inquiry","insect","insert","inside","insist","install",
+    "instance","instant","instead","intend","interest","internal","internet","interview","into","invade",
+    "invest","iron","island","isolate","issue","item","itself","jacket","jail","james",
+    "jane","jar","jet","jewish","job","john","join","joint","joke","journal",
+    "journey","joy","judge","judgment","juice","jump","junior","jury","just","justice",
+    "justify","keen","keep","key","kick","kid","kill","kind","king","kiss",
+    "kit","kitchen","knee","knew","knife","knock","know","knowledge","label","labor",
+    "lack","lady","lake","land","landscape","language","laptop","large","laser","last",
+    "late","later","latin","latter","laugh","launch","lawn","lawyer","layer","lead",
+    "leader","leaf","league","lean","learn","least","leather","leave","left","legal",
+    "lemon","length","lesson","letter","level","liberal","liberty","library","license","life",
+    "lift","light","like","likely","limit","line","link","lion","lip","list",
+    "listen","little","live","load","loan","lobby","local","lock","long","look",
+    "lord","lose","loss","lost","loud","love","lovely","lover","low","lower",
+    "luck","lunch","lung","machine","mad","magic","mail","main","maintain","major",
+    "majority","make","male","mall","manage","manner","many","map","march","margin",
+    "mark","market","marriage","marry","mask","mass","master","match","mate","material",
+    "math","matter","maximum","maybe","mayor","meal","mean","meaning","measure","meat",
+    "media","medical","medicine","medium","meet","member","memory","mental","mention","menu",
+    "mercy","mere","mess","message","metal","method","middle","might","military","milk",
+    "million","mind","mine","minister","minor","minority","minute","miracle","mirror","miss",
+    "mission","mistake","mix","model","moderate","modern","modest","moment","money","monitor",
+    "month","mood","moon","moral","morning","mortgage","most","mother","motion","motor",
+    "mount","mountain","mouse","mouth","move","movement","movie","much","murder","muscle",
+    "museum","music","must","mutual","myself","mystery","myth","naked","name","narrow",
+    "nation","national","native","natural","nature","near","nearly","neat","necessary","neck",
+    "need","negative","negotiate","neighbor","neither","nerve","nest","net","network","never",
+    "new","news","next","nice","night","nine","noble","nobody","nod","noise",
+    "none","normal","north","northern","nose","note","nothing","notice","notion","novel",
+    "now","nowhere","nuclear","number","nurse","object","observe","obtain","obvious","occur",
+    "ocean","odd","offense","offensive","offer","office","officer","official","often","oil",
+    "okay","old","once","one","ongoing","onion","online","only","onto","open",
+    "operate","opinion","opponent","opportunity","oppose","option","orange","order","ordinary","organic",
+    "origin","other","otherwise","ought","outcome","outdoor","outer","output","outside","overcome",
+    "owner","pace","pack","package","page","paid","pain","paint","pair","palace",
+    "pale","palm","pan","panel","panic","paper","parent","park","parking","part",
+    "partly","partner","party","pass","passage","passion","past","patch","path","patient",
+    "pattern","pause","peace","peak","peer","penalty","pension","people","pepper","percent",
+    "perfect","perform","perhaps","period","permit","person","personal","pet","phase","phone",
+    "photo","phrase","physical","piano","pick","picture","piece","pilot","pine","pink",
+    "pipe","pitch","pizza","place","plain","plan","plane","planet","plant","plastic",
+    "plate","platform","play","player","please","pleasure","plenty","plot","plug","plus",
+    "pocket","poem","poet","poetry","point","poison","pole","police","policy","politics",
+    "poll","pool","poor","pop","popular","population","pork","port","portrait","position",
+    "positive","possible","post","pot","potato","potential","pound","pour","poverty","powder",
+    "power","powerful","practice","pray","prayer","predict","prefer","pregnant","prepare","presence",
+    "present","preserve","president","press","pressure","pretend","pretty","prevent","previous","price",
+    "pride","priest","primary","prince","princess","principle","print","prior","priority","prison",
+    "prisoner","privacy","private","prize","probably","problem","proceed","process","produce","product",
+    "production","profession","professor","profile","profit","program","progress","project","promise","promote",
+    "proof","proper","property","proposal","propose","prospect","protect","protein","protest","proud",
+    "prove","provide","province","public","pull","pump","punch","punish","purchase","pure",
+    "purple","purpose","pursue","push","qualify","quality","quarter","queen","question","quick",
+    "quiet","quit","quite","quote","race","racial","racism","radical","radio","rage",
+    "rain","raise","range","rank","rapid","rare","rate","rather","ratio","raw",
+    "reach","react","read","reader","ready","real","realistic","reality","realize","really",
+    "reason","rebel","recall","receive","recent","recognize","recommend","record","recover","recruit",
+    "reduce","refer","reflect","reform","refuse","regard","regime","region","register","regret",
+    "regular","reject","relate","relation","release","relevant","relief","religion","rely","remain",
+    "remark","remember","remind","remote","remove","repeat","replace","reply","report","represent",
+    "republic","reputation","request","require","research","resist","resolve","resource","respond","response",
+    "rest","restaurant","restore","result","retain","retire","return","reveal","revenue","review",
+    "revolution","rhythm","rice","rich","ride","rifle","right","ring","riot","rise",
+    "risk","river","road","robot","rock","role","roll","roman","romantic","roof",
+    "room","root","rope","rose","rough","round","route","routine","row","royal",
+    "ruin","rule","run","rural","rush","sacred","sacrifice","sad","safe","safety",
+    "sail","sake","salad","salary","sale","salt","same","sample","sand","satellite",
+    "satisfy","sauce","save","scale","scared","scene","schedule","scheme","scholar","school",
+    "science","scientist","scope","score","screen","sea","search","season","seat","second",
+    "secret","section","sector","secure","seed","seek","seem","segment","seize","select",
+    "self","sell","senate","send","senior","sense","sentence","separate","sequence","series",
+    "serious","serve","service","session","settle","seven","several","severe","shade","shadow",
+    "shake","shall","shame","shape","share","sharp","shed","sheer","sheet","shelf",
+    "shell","shelter","shift","shine","ship","shirt","shock","shoe","shoot","shop",
+    "shore","short","shot","should","shoulder","shout","show","shower","shut","sick",
+    "side","sight","sign","signal","silence","silent","silk","silly","silver","similar",
+    "simple","since","sing","singer","single","sink","sister","site","situation","six",
+    "size","ski","skill","skin","sky","slave","sleep","slice","slide","slight",
+    "slip","slow","small","smart","smell","smile","smoke","smooth","snap","snow",
+    "social","society","soft","software","soil","solar","soldier","solid","solution","solve",
+    "some","somebody","somehow","someone","something","sometimes","somewhat","somewhere","son","song",
+    "soon","sorry","sort","soul","sound","source","south","southern","space","speak",
+    "speaker","special","specific","speech","speed","spend","sphere","spin","spirit","split",
+    "spokesman","sport","spot","spread","spring","square","squeeze","stable","staff","stage",
+    "stake","stand","standard","star","stare","start","state","statement","station","status",
+    "stay","steady","steal","steam","steel","stem","step","stick","stiff","still",
+    "stock","stomach","stone","stop","store","storm","story","straight","strange","stranger",
+    "strategic","strategy","stream","street","strength","stress","stretch","strike","string","strip",
+    "stroke","strong","structure","struggle","student","studio","study","stuff","stupid","style",
+    "subject","submit","succeed","success","such","sudden","suffer","sugar","suggest","suit",
+    "summer","summit","sunday","super","supply","support","suppose","sure","surface","surgery",
+    "surprise","surround","survey","survive","suspect","suspend","swallow","swear","sweet","swim",
+    "swing","switch","symbol","sympathy","system","table","tackle","tail","take","tale",
+    "talent","talk","tall","tank","tape","target","task","taste","taught","teach",
+    "teacher","team","tear","technology","telephone","television","tell","temperature","temporary","tend",
+    "tenant","tension","term","terms","terrible","territory","terror","test","testify","text",
+    "thank","theme","then","theory","therapy","there","thick","thin","thing","think",
+    "third","thirty","this","those","though","thought","thousand","threat","three","throat",
+    "through","throw","thus","ticket","tide","tight","till","timber","time","tiny",
+    "tired","tissue","title","tobacco","today","together","toll","tone","tongue","tonight",
+    "tool","tooth","topic","total","touch","tough","tour","tourist","toward","tower",
+    "town","trace","track","trade","tradition","traffic","trail","train","training","transfer",
+    "transform","transition","translate","travel","treat","treatment","treaty","tree","trend","trial",
+    "tribe","trick","trigger","trip","triumph","troop","trouble","truck","truly","trust",
+    "truth","tune","tunnel","turn","twice","twin","twist","type","typical","ugly",
+    "ultimate","unable","uncle","under","undergo","understand","union","unique","unit","united",
+    "universe","university","unknown","unless","unlike","unlikely","until","unusual","upper","upset",
+    "urban","urge","used","useful","user","usual","usually","valley","valuable","value",
+    "van","variety","various","vast","vehicle","venture","version","versus","very","vessel",
+    "veteran","victim","victory","video","view","village","violate","violence","virtual","virtue",
+    "visible","vision","visit","visitor","visual","vital","voice","volume","voluntary","vote",
+    "vulnerable","wage","wait","wake","walk","wall","wander","want","warn","wash",
+    "waste","watch","water","wave","weapon","wear","weather","web","website","wedding",
+    "week","weekend","weigh","weight","welcome","welfare","well","west","western","wet",
+    "what","wheat","wheel","when","where","while","whisper","white","whole","whom",
+    "wide","widely","wife","wild","will","willing","wind","window","wine","wing",
+    "winner","winter","wire","wisdom","wise","wish","withdraw","within","without","witness",
+    "woman","wonder","wood","wooden","word","work","worker","world","worried","worry",
+    "worse","worst","worth","would","wound","wrap","write","writer","wrong","yard",
+    "yeah","year","yell","yellow","yes","yesterday","yield","young","yours","youth",
+    "zone","zero"
+}
 
-for word in string.gmatch(rawDict, "%S+") do
-    if #word >= 3 and #word <= 12 then
-        table.insert(allWords, string.lower(word))
-    end
-end
-
+-- indicizza per prefisso
 local byPrefix = {}
-for _, w in pairs(allWords) do
+for _, w in pairs(commonWords) do
     for len = 1, math.min(4, #w) do
         local pre = string.sub(w, 1, len)
         if not byPrefix[pre] then
@@ -263,11 +452,19 @@ for _, w in pairs(allWords) do
     end
 end
 
-statusLabel.Text = "READY (" .. #allWords .. " words)"
+statusLabel.Text = "READY (" .. #commonWords .. " words)"
 statusDot.BackgroundColor3 = Color3.fromRGB(60, 180, 75)
 
-local used = {}
-local triedThisRound = {}
+local usedInMatch = {}
+local triedThisTurn = {}
+local wasMatchResults = false
+
+local function isMatchOver()
+    local ok, result = pcall(function()
+        return pgui.MatchResults.Frame.Visible
+    end)
+    return ok and result
+end
 
 local function isMyTurn()
     local ok, result = pcall(function()
@@ -300,16 +497,8 @@ end
 local function getWord(prefix)
     if not byPrefix[prefix] then return nil end
     for _, w in pairs(byPrefix[prefix]) do
-        if not used[w] and not triedThisRound[w] then
-            used[w] = true
-            triedThisRound[w] = true
-            return w
-        end
-    end
-    used = {}
-    for _, w in pairs(byPrefix[prefix]) do
-        if not triedThisRound[w] then
-            triedThisRound[w] = true
+        if not usedInMatch[w] and not triedThisTurn[w] then
+            triedThisTurn[w] = true
             return w
         end
     end
@@ -424,6 +613,20 @@ end)
 while task.wait(0.3) do
     if not botActive then continue end
 
+    -- check fine match → resetta parole usate
+    if isMatchOver() then
+        if not wasMatchResults then
+            wasMatchResults = true
+            usedInMatch = {}
+            wordLabel.Text = "MATCH OVER"
+            statusLabel.Text = "MATCH ENDED"
+            statusDot.BackgroundColor3 = Color3.fromRGB(240, 180, 40)
+        end
+        continue
+    else
+        wasMatchResults = false
+    end
+
     if isInGame() then
         if isMyTurn() then
             statusLabel.Text = "MY TURN"
@@ -434,7 +637,7 @@ while task.wait(0.3) do
             local prefix = getLetters()
             if prefix == "" then continue end
 
-            triedThisRound = {}
+            triedThisTurn = {}
             totalRounds = totalRounds + 1
             roundsVal.Text = tostring(totalRounds)
             prefixLabel.Text = "PREFIX: " .. string.upper(prefix)
@@ -463,16 +666,16 @@ while task.wait(0.3) do
                 totalWords = totalWords + 1
                 wordsVal.Text = tostring(totalWords)
 
-                -- aspetta per vedere se il turno passa
                 task.wait(1.2)
 
-                -- se non è più il mio turno → accettata
                 if not isMyTurn() then
+                    -- accettata — segna come usata nel match
+                    usedInMatch[word] = true
                     wordLabel.Text = string.upper(word) .. " OK"
                     break
                 end
 
-                -- ancora il mio turno → rifiutata, cancella tutto e riprova
+                -- rifiutata — cancella tutto e riprova
                 clearAll(#word - #prefix)
                 task.wait(0.3)
             end
